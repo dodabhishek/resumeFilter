@@ -1,12 +1,13 @@
 """
-Scoring engine implementing the 100-point rubric, penalties, and evidence evaluation.
+Scoring engine implementing dynamic criteria scoring, penalties, and explainable remarks.
+Supports custom user requirements while maintaining guardrails against shallow wrappers and tutorial copies.
 """
 import re
 from typing import Dict, List, Tuple, Optional
-from ..models.schemas import ScoreBreakdown, PenaltyDetails, ParsedResume, LLMAnalysisResult
+from ..models.schemas import ScoreBreakdown, PenaltyDetails, ParsedResume, JobCriteria
 from ..config import config
 
-# Regex signals for depth evaluation
+# Regex signals for legacy depth evaluation
 AGENTIC_DEPTH_SIGNALS = [
     (r'\blanggraph\b|\bmulti[- ]agent\b|\bautogen\b|\bcrewai\b|\bstategraph\b', 12.0, "Multi-agent / Stateful orchestration"),
     (r'\brag\b|\bretrieval[- ]augmented\b|\bhybrid search\b|\bre-ranking\b|\breranking\b|\bvector\b', 10.0, "RAG pipeline & vector search"),
@@ -48,7 +49,7 @@ TUTORIAL_PROJECT_PATTERNS = [
 ]
 
 
-def detect_penalties(text: str, projects_text: str = "") -> Tuple[PenaltyDetails, float]:
+def detect_penalties(text: str, projects_text: str = "", required_skills: Optional[List[str]] = None) -> Tuple[PenaltyDetails, float]:
     """
     Detect project-quality penalties:
     1. Deduct 5-15 pts for thin AI wrapper without workflow/state/retrieval.
@@ -61,7 +62,7 @@ def detect_penalties(text: str, projects_text: str = "") -> Tuple[PenaltyDetails
     keyword_penalty = 0.0
     reasons = []
 
-    # Check for thin wrapper markers
+    # 1. Check for thin wrapper markers
     for pattern, penalty, reason in THIN_WRAPPER_PATTERNS:
         if re.search(pattern, combined):
             thin_penalty = max(thin_penalty, penalty)
@@ -74,13 +75,13 @@ def detect_penalties(text: str, projects_text: str = "") -> Tuple[PenaltyDetails
         thin_penalty = 10.0
         reasons.append("Thin Wrapper Penalty (-10.0 pts): AI project relies on direct API calls with no RAG, state management, or tool orchestration.")
 
-    # Check for tutorial markers
+    # 2. Check for tutorial markers
     for pattern, penalty, reason in TUTORIAL_PROJECT_PATTERNS:
         if re.search(pattern, combined):
             tutorial_penalty = max(tutorial_penalty, penalty)
             reasons.append(f"Tutorial Project Penalty (-{penalty} pts): {reason}")
 
-    # Check for skill keyword stuffing (listing advanced frameworks with zero mentions in project/experience descriptions)
+    # 3. Check for skill keyword stuffing
     if projects_text and len(projects_text.strip()) > 30:
         projects_lower = projects_text.lower()
         if "langgraph" in combined and "langgraph" not in projects_lower and "graph" not in projects_lower:
@@ -113,26 +114,17 @@ def calculate_category_score(text: str, signals: List[Tuple[str, float, str]], m
 
 def compute_deterministic_score(parsed: ParsedResume, github_score: float = 0.0) -> Tuple[ScoreBreakdown, PenaltyDetails, List[str], List[str], str]:
     """
-    Compute explainable score breakdown, penalties, strengths, concerns, and project summary.
+    Original 100-point rubric implementation for backward compatibility and benchmark tests.
     """
     text = parsed.raw_text
     
-    # 1. AI / Agentic / RAG Project Depth (Max 40)
     ai_score, ai_evidences = calculate_category_score(text, AGENTIC_DEPTH_SIGNALS, 40.0)
+    py_score, _ = calculate_category_score(text, PYTHON_BACKEND_SIGNALS, 30.0)
+    cloud_score, _ = calculate_category_score(text, CLOUD_FULLSTACK_SIGNALS, 15.0)
+    eng_score, _ = calculate_category_score(text, ENGINEERING_DEPTH_SIGNALS, 5.0)
     
-    # 2. Python & Backend Engineering (Max 30)
-    py_score, py_evidences = calculate_category_score(text, PYTHON_BACKEND_SIGNALS, 30.0)
-    
-    # 3. Cloud / Deployment / Full Stack (Max 15)
-    cloud_score, cloud_evidences = calculate_category_score(text, CLOUD_FULLSTACK_SIGNALS, 15.0)
-    
-    # 4. Engineering Depth Signals (Max 5)
-    eng_score, eng_evidences = calculate_category_score(text, ENGINEERING_DEPTH_SIGNALS, 5.0)
-    
-    # 5. Penalties
     penalties, total_deduction = detect_penalties(text, parsed.projects_text)
     
-    # Apply penalties proportionally to AI Project score first (never negative)
     if total_deduction > 0:
         ai_score = max(0.0, ai_score - total_deduction)
 
@@ -144,7 +136,6 @@ def compute_deterministic_score(parsed: ParsedResume, github_score: float = 0.0)
         engineering_depth=round(eng_score, 1)
     )
 
-    # Compile strengths & concerns
     strengths = []
     concerns = []
 
@@ -167,10 +158,111 @@ def compute_deterministic_score(parsed: ParsedResume, github_score: float = 0.0)
         for r in penalties.penalty_reasons:
             concerns.append(r)
 
-    # Formulate project summary
     if ai_evidences:
         project_summary = f"Demonstrated engineering work involving {', '.join(ai_evidences[:2])} and backend services."
     else:
         project_summary = "General software development with Python and supporting libraries."
+
+    return breakdown, penalties, strengths, concerns, project_summary
+
+
+def compute_dynamic_score(
+    parsed: ParsedResume,
+    criteria: Optional[JobCriteria] = None,
+    github_score: float = 0.0
+) -> Tuple[ScoreBreakdown, PenaltyDetails, List[str], List[str], str]:
+    """
+    Dynamically compute match score and qualitative remarks based on user criteria.
+    """
+    if not criteria or (not criteria.must_have_project_keywords and not criteria.required_keywords):
+        return compute_deterministic_score(parsed, github_score)
+
+    text = parsed.raw_text
+    text_lower = text.lower()
+    projects_lower = (parsed.projects_text or "").lower()
+
+    # 1. Project Requirements Depth (Max 40 pts)
+    project_score = 0.0
+    matched_project_details = []
+    if criteria.must_have_project_keywords:
+        points_per_kw = 40.0 / len(criteria.must_have_project_keywords)
+        for kw in criteria.must_have_project_keywords:
+            kw_clean = kw.strip().lower()
+            if not kw_clean:
+                continue
+            if kw_clean in projects_lower:
+                project_score += points_per_kw
+                matched_project_details.append(kw)
+            elif kw_clean in text_lower:
+                project_score += (points_per_kw * 0.7)
+                matched_project_details.append(kw)
+    else:
+        project_score = 30.0
+
+    project_score = min(40.0, project_score)
+
+    # 2. Core Required Skills Score (Max 30 pts)
+    core_score = 0.0
+    if criteria.required_keywords:
+        points_per_req = 30.0 / len(criteria.required_keywords)
+        for req in criteria.required_keywords:
+            req_clean = req.strip().lower()
+            if req_clean and req_clean in text_lower:
+                core_score += points_per_req
+    else:
+        core_score = 25.0
+
+    core_score = min(30.0, core_score)
+
+    # 3. Preferred / Supporting Stack Score (Max 15 pts)
+    preferred_score = 0.0
+    if criteria.preferred_keywords:
+        points_per_pref = 15.0 / len(criteria.preferred_keywords)
+        for pref in criteria.preferred_keywords:
+            pref_clean = pref.strip().lower()
+            if pref_clean and pref_clean in text_lower:
+                preferred_score += points_per_pref
+    else:
+        for pat in [r'\bdocker\b', r'\baws\b|\bgcp\b', r'\bci/cd\b|\bgit\b']:
+            if re.search(pat, text_lower):
+                preferred_score += 5.0
+
+    preferred_score = min(15.0, preferred_score)
+
+    # 4. Engineering Depth Signals (Max 5 pts)
+    eng_score, _ = calculate_category_score(text, ENGINEERING_DEPTH_SIGNALS, 5.0)
+
+    # 5. Penalties
+    all_reqs = criteria.required_keywords + criteria.must_have_project_keywords
+    penalties, total_deduction = detect_penalties(text, parsed.projects_text, all_reqs)
+
+    final_project_score = max(0.0, project_score - total_deduction)
+
+    breakdown = ScoreBreakdown(
+        ai_project_depth=round(final_project_score, 1),
+        python_backend=round(core_score, 1),
+        cloud_fullstack=round(preferred_score, 1),
+        github=round(min(github_score, 10.0), 1),
+        engineering_depth=round(eng_score, 1)
+    )
+
+    strengths = []
+    concerns = []
+
+    if matched_project_details:
+        strengths.append(f"Demonstrated verified hands-on projects incorporating: {', '.join(matched_project_details)}")
+    if core_score >= 20.0:
+        strengths.append(f"Strong foundation across required technical competencies for {criteria.role_title}")
+    if preferred_score >= 8.0:
+        strengths.append("Additional experience with preferred supporting tools and cloud technologies")
+
+    if penalties.penalty_reasons:
+        for r in penalties.penalty_reasons:
+            concerns.append(r)
+
+    if matched_project_details:
+        project_summary = f"Practical project portfolio highlights work with {', '.join(matched_project_details)} tailored for {criteria.role_title}."
+    else:
+        project_summary = f"Technical background and relevant project experience for {criteria.role_title}."
 
     return breakdown, penalties, strengths, concerns, project_summary

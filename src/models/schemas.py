@@ -6,7 +6,17 @@ from typing import List, Optional, Dict, Any
 
 try:
     from pydantic import BaseModel, Field
-    
+
+    class JobCriteria(BaseModel):
+        role_title: str = Field(default="Software Engineer", description="Role/Position title")
+        required_keywords: List[str] = Field(default_factory=list, description="Core mandatory skills/technologies")
+        must_have_project_keywords: List[str] = Field(
+            default_factory=list,
+            description="Keywords where candidate MUST have hands-on project experience"
+        )
+        preferred_keywords: List[str] = Field(default_factory=list, description="Nice-to-have bonus technologies")
+        custom_instructions: str = Field(default="", description="Additional filtering instructions or context")
+
     class ScoreBreakdown(BaseModel):
         ai_project_depth: float = Field(default=0.0, ge=0.0, le=40.0)
         python_backend: float = Field(default=0.0, ge=0.0, le=30.0)
@@ -36,6 +46,12 @@ try:
         strengths: List[str] = Field(default_factory=list)
         concerns: List[str] = Field(default_factory=list)
         source_file: str = ""
+        # Dynamic remarks and project verification details
+        remarks_accepted: List[str] = Field(default_factory=list, description="Remarks on what they built and why accepted")
+        remarks_rejected: List[str] = Field(default_factory=list, description="Explicit reasons for rejection")
+        project_evidence_matched: Dict[str, str] = Field(default_factory=dict, description="Evidence found for project requirements")
+        missing_project_skills: List[str] = Field(default_factory=list, description="Project skills missing or lacking implementation")
+        missing_required_skills: List[str] = Field(default_factory=list, description="Core required skills missing")
 
     class BatchSummary(BaseModel):
         total_resumes: int = 0
@@ -103,6 +119,14 @@ except ImportError:
             return res
 
     @dataclasses.dataclass
+    class JobCriteria(_BaseModelHelper):
+        role_title: str = "Software Engineer"
+        required_keywords: List[str] = dataclasses.field(default_factory=list)
+        must_have_project_keywords: List[str] = dataclasses.field(default_factory=list)
+        preferred_keywords: List[str] = dataclasses.field(default_factory=list)
+        custom_instructions: str = ""
+
+    @dataclasses.dataclass
     class ScoreBreakdown(_BaseModelHelper):
         ai_project_depth: float = 0.0
         python_backend: float = 0.0
@@ -134,6 +158,11 @@ except ImportError:
         strengths: List[str] = dataclasses.field(default_factory=list)
         concerns: List[str] = dataclasses.field(default_factory=list)
         source_file: str = ""
+        remarks_accepted: List[str] = dataclasses.field(default_factory=list)
+        remarks_rejected: List[str] = dataclasses.field(default_factory=list)
+        project_evidence_matched: Dict[str, str] = dataclasses.field(default_factory=dict)
+        missing_project_skills: List[str] = dataclasses.field(default_factory=list)
+        missing_required_skills: List[str] = dataclasses.field(default_factory=list)
 
     @dataclasses.dataclass
     class BatchSummary(_BaseModelHelper):

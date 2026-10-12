@@ -1,5 +1,6 @@
 """
 Pluggable LLM client adapter supporting Mock/Heuristic, OpenAI, and Gemini with JSON enforcement and detailed logging.
+Supports dynamic screening criteria based on user specifications.
 """
 import os
 import json
@@ -8,17 +9,17 @@ import urllib.request
 import urllib.error
 from abc import ABC, abstractmethod
 from typing import Optional, Dict, Any
-from ..models.schemas import LLMAnalysisResult, ParsedResume
-from ..screening.scorer import compute_deterministic_score, detect_penalties
+from ..models.schemas import LLMAnalysisResult, ParsedResume, JobCriteria
+from ..screening.scorer import compute_dynamic_score, detect_penalties
 from ..screening.filter import extract_matched_skills
-from .prompts import RESUME_EVALUATION_SYSTEM_PROMPT, build_user_prompt
+from .prompts import build_dynamic_system_prompt, build_user_prompt
 from ..config import config
 
 logger = logging.getLogger("ResumeScreener.LLM")
 
 class BaseLLMClient(ABC):
     @abstractmethod
-    def evaluate_resume(self, parsed: ParsedResume) -> LLMAnalysisResult:
+    def evaluate_resume(self, parsed: ParsedResume, criteria: Optional[JobCriteria] = None) -> LLMAnalysisResult:
         """Evaluate resume text and return structured analysis."""
         pass
 
@@ -26,12 +27,16 @@ class BaseLLMClient(ABC):
 class MockLLMClient(BaseLLMClient):
     """
     High-fidelity deterministic scoring engine acting as local LLM adapter.
-    Evaluates depth, project authenticity, and penalties predictably and testably.
+    Evaluates depth, project authenticity, and penalties predictably and testably against user criteria.
     """
-    def evaluate_resume(self, parsed: ParsedResume) -> LLMAnalysisResult:
+    def evaluate_resume(self, parsed: ParsedResume, criteria: Optional[JobCriteria] = None) -> LLMAnalysisResult:
         logger.info(f"[LLM:Local] Analyzing project depth and penalties for candidate: '{parsed.candidate_name}'")
-        breakdown, penalties, strengths, concerns, summary = compute_deterministic_score(parsed, github_score=0.0)
-        matched_skills = extract_matched_skills(parsed.raw_text)
+        breakdown, penalties, strengths, concerns, summary = compute_dynamic_score(parsed, criteria=criteria, github_score=0.0)
+        
+        custom_kws = None
+        if criteria:
+            custom_kws = criteria.required_keywords + criteria.must_have_project_keywords + criteria.preferred_keywords
+        matched_skills = extract_matched_skills(parsed.raw_text, custom_kws)
 
         is_thin = penalties.thin_wrapper_deduction > 0
         is_tut = penalties.tutorial_deduction > 0
@@ -51,7 +56,7 @@ class MockLLMClient(BaseLLMClient):
             strengths=strengths,
             concerns=concerns,
             evidence={
-                "ai_score_reason": f"AI project depth scored at {breakdown.ai_project_depth}/40",
+                "project_score_reason": f"Project depth scored at {breakdown.ai_project_depth}/40",
                 "penalties_applied": ", ".join(penalties.penalty_reasons) if penalties.penalty_reasons else "No penalties applied"
             }
         )
@@ -64,10 +69,10 @@ class OpenAIClient(BaseLLMClient):
         self.model = model
         self.fallback = MockLLMClient()
 
-    def evaluate_resume(self, parsed: ParsedResume) -> LLMAnalysisResult:
+    def evaluate_resume(self, parsed: ParsedResume, criteria: Optional[JobCriteria] = None) -> LLMAnalysisResult:
         if not self.api_key:
             logger.warning("[LLM:OpenAI] No OpenAI API key provided. Using local heuristic fallback.")
-            return self.fallback.evaluate_resume(parsed)
+            return self.fallback.evaluate_resume(parsed, criteria)
 
         logger.info(f"[LLM:OpenAI] Sending request to OpenAI model '{self.model}' for '{parsed.candidate_name}'...")
         url = "https://api.openai.com/v1/chat/completions"
@@ -75,11 +80,12 @@ class OpenAIClient(BaseLLMClient):
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.api_key}"
         }
+        system_prompt = build_dynamic_system_prompt(criteria)
         payload = {
             "model": self.model,
             "messages": [
-                {"role": "system", "content": RESUME_EVALUATION_SYSTEM_PROMPT},
-                {"role": "user", "content": build_user_prompt(parsed.raw_text)}
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": build_user_prompt(parsed.raw_text, criteria)}
             ],
             "response_format": {"type": "json_object"},
             "temperature": 0.1
@@ -95,7 +101,7 @@ class OpenAIClient(BaseLLMClient):
                 return LLMAnalysisResult(**parsed_json)
         except Exception as e:
             logger.warning(f"[LLM:OpenAI] API call failed for '{parsed.candidate_name}': {e}. Falling back to local engine.")
-            return self.fallback.evaluate_resume(parsed)
+            return self.fallback.evaluate_resume(parsed, criteria)
 
 
 class GeminiClient(BaseLLMClient):
@@ -105,15 +111,16 @@ class GeminiClient(BaseLLMClient):
         self.model = model
         self.fallback = MockLLMClient()
 
-    def evaluate_resume(self, parsed: ParsedResume) -> LLMAnalysisResult:
+    def evaluate_resume(self, parsed: ParsedResume, criteria: Optional[JobCriteria] = None) -> LLMAnalysisResult:
         if not self.api_key:
             logger.warning("[LLM:Gemini] No Gemini API key provided. Using local heuristic fallback.")
-            return self.fallback.evaluate_resume(parsed)
+            return self.fallback.evaluate_resume(parsed, criteria)
 
         logger.info(f"[LLM:Gemini] Sending request to Google Gemini API (model: '{self.model}') for '{parsed.candidate_name}'...")
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent?key={self.api_key}"
         headers = {"Content-Type": "application/json"}
-        prompt_text = f"{RESUME_EVALUATION_SYSTEM_PROMPT}\n\n{build_user_prompt(parsed.raw_text)}"
+        system_prompt = build_dynamic_system_prompt(criteria)
+        prompt_text = f"{system_prompt}\n\n{build_user_prompt(parsed.raw_text, criteria)}"
         payload = {
             "contents": [{"parts": [{"text": prompt_text}]}],
             "generationConfig": {
@@ -132,7 +139,7 @@ class GeminiClient(BaseLLMClient):
                 return LLMAnalysisResult(**parsed_json)
         except Exception as e:
             logger.warning(f"[LLM:Gemini] API connection error for '{parsed.candidate_name}': {e}. Gracefully falling back to local engine.")
-            return self.fallback.evaluate_resume(parsed)
+            return self.fallback.evaluate_resume(parsed, criteria)
 
 
 def get_llm_client() -> BaseLLMClient:

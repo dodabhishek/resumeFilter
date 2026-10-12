@@ -3,15 +3,16 @@
 CLI Entry point for the AI Resume Screening & Ranking System.
 Usage:
     python main.py --input ./resumes --output ./output/results.json
+    python main.py --role "AI Engineer" --project-required "LangGraph, RAG" --required "Python, FastAPI"
 """
 import os
 import sys
 import json
 import argparse
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 from src.pipeline import run_screening_pipeline
-from src.models.schemas import ScreeningOutput
+from src.models.schemas import ScreeningOutput, JobCriteria
 
 def render_terminal_table(output: ScreeningOutput):
     """Print an attractive summary table to stdout."""
@@ -21,38 +22,52 @@ def render_terminal_table(output: ScreeningOutput):
     print("=" * 80)
     print(f" Total Resumes Processed : {summary.total_resumes}")
     print(f" Successfully Parsed     : {summary.successfully_parsed}")
-    print(f" Eligible Candidates     : {summary.eligible}")
-    print(f" Rejected Candidates     : {summary.rejected}")
+    print(f" Accepted / Eligible     : {summary.eligible}")
+    print(f" Rejected                : {summary.rejected}")
     print(f" Unreadable / Malformed  : {summary.failed_unreadable}")
     print(f" Execution Time          : {summary.execution_time_seconds:.2f} seconds")
     print("-" * 80)
 
-    print("\n🏆 RANKED SHORTLIST (ELIGIBLE CANDIDATES):")
+    print("\n🏆 ACCEPTED CANDIDATES (RANKED BY FIT):")
     if not output.ranked_candidates:
-        print("  (No eligible candidates found in batch)")
+        print("  (No eligible candidates matched criteria)")
     else:
-        print(f"{'Rank':<5} {'Candidate Name':<22} {'Score':<8} {'AI':<6} {'Python':<8} {'Cloud':<7} {'GH':<5} {'Eng':<5} {'Matched Skills'}")
-        print("-" * 95)
+        print(f"{'Rank':<5} {'Candidate Name':<22} {'Source File':<20} {'Matched Project Skills'}")
+        print("-" * 85)
         for c in output.ranked_candidates:
-            b = c.score_breakdown
             skills_str = ", ".join(c.matched_skills[:4])
-            print(f"#{c.rank:<4} {c.candidate_name[:20]:<22} {c.total_score:<8.1f} {b.ai_project_depth:<6.1f} {b.python_backend:<8.1f} {b.cloud_fullstack:<7.1f} {b.github:<5.1f} {b.engineering_depth:<5.1f} {skills_str}")
+            print(f"#{c.rank:<4} {c.candidate_name[:20]:<22} {c.source_file[:18]:<20} {skills_str}")
+            if c.remarks_accepted:
+                for rem in c.remarks_accepted[:2]:
+                    print(f"       ✓ {rem[:75]}")
 
     if output.rejected_candidates:
-        print("\n❌ REJECTED CANDIDATES (HARD FILTER / MALFORMED):")
-        print(f"{'Candidate Name':<25} {'Rejection Reasons'}")
-        print("-" * 80)
+        print("\n❌ REJECTED CANDIDATES:")
+        print(f"{'Candidate Name':<25} {'Rejection Reason'}")
+        print("-" * 85)
         for c in output.rejected_candidates:
-            reasons = "; ".join(c.rejection_reasons)
-            print(f"{c.candidate_name[:23]:<25} {reasons}")
+            reason = c.remarks_rejected[0] if c.remarks_rejected else (c.rejection_reasons[0] if c.rejection_reasons else "Requirements not met")
+            print(f"{c.candidate_name[:23]:<25} {reason[:58]}")
 
     print("\n" + "=" * 80 + "\n")
+
+
+def parse_comma_list(val: Optional[str]) -> List[str]:
+    """Parse comma-separated string into list of strings."""
+    if not val:
+        return []
+    return [item.strip() for item in val.split(',') if item.strip()]
 
 
 def main():
     parser = argparse.ArgumentParser(description="AI Resume Screening & Ranking System")
     parser.add_argument("--input", "-i", default="./resumes", help="Directory path containing resumes (PDF/DOCX/TXT)")
     parser.add_argument("--output", "-o", default="./output/results.json", help="Output JSON file path")
+    parser.add_argument("--role", default="Python + AI/Agentic Engineer", help="Target Job Role title")
+    parser.add_argument("--project-required", default="LangGraph, RAG, AI", help="Skills candidate MUST have built projects with (comma-separated)")
+    parser.add_argument("--required", default="Python", help="Core mandatory skills (comma-separated)")
+    parser.add_argument("--preferred", default="FastAPI, Docker", help="Preferred bonus skills (comma-separated)")
+    parser.add_argument("--criteria-file", default=None, help="JSON file containing JobCriteria")
     args = parser.parse_args()
 
     input_dir = os.path.abspath(args.input)
@@ -62,16 +77,32 @@ def main():
         print(f"Error: Input directory does not exist: {input_dir}", file=sys.stderr)
         sys.exit(1)
 
-    print(f"🔍 Starting screening pipeline on: {input_dir}")
-    screening_output = run_screening_pipeline(input_dir)
+    # Build or load JobCriteria
+    if args.criteria_file and os.path.exists(args.criteria_file):
+        with open(args.criteria_file, 'r', encoding='utf-8') as f:
+            criteria_dict = json.load(f)
+            criteria = JobCriteria(**criteria_dict)
+    else:
+        criteria = JobCriteria(
+            role_title=args.role,
+            required_keywords=parse_comma_list(args.required),
+            must_have_project_keywords=parse_comma_list(args.project_required),
+            preferred_keywords=parse_comma_list(args.preferred)
+        )
+
+    print(f"🔍 Screening resumes against Role: '{criteria.role_title}'")
+    print(f"   • Must Have Built Projects With: {', '.join(criteria.must_have_project_keywords) or 'None'}")
+    print(f"   • Core Required Skills: {', '.join(criteria.required_keywords) or 'None'}")
+    print(f"   • Preferred Skills: {', '.join(criteria.preferred_keywords) or 'None'}")
+
+    screening_output = run_screening_pipeline(input_dir=input_dir, criteria=criteria)
 
     # Ensure output directory exists
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
 
-    # Format output according to assignment specification
-    # Specification accepts the array of candidate results with batch summary
     export_data = {
         "batch_summary": screening_output.summary.model_dump(),
+        "criteria": criteria.model_dump(),
         "ranked_candidates": [c.model_dump(exclude_none=True) for c in screening_output.ranked_candidates],
         "rejected_candidates": [c.model_dump(exclude_none=True) for c in screening_output.rejected_candidates]
     }

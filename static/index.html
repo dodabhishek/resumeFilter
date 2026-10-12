@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ResumeFilter AI — Intelligent Candidate Screening</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0fdfa',
+              100: '#ccfbf1',
+              500: '#14b8a6',
+              600: '#0d9488',
+              700: '#0f766e',
+              800: '#115e59',
+              900: '#134e4a'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    code, pre {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen antialiased flex flex-col">
+
+  <!-- Top Navigation -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-teal-600 to-emerald-500 flex items-center justify-center text-white shadow-md shadow-teal-500/20">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+        </div>
+        <div>
+          <span class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 via-teal-900 to-teal-700">ResumeFilter AI</span>
+          <span class="ml-2 text-xs font-semibold px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200">v2.0 Dynamic</span>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-4">
+        <div class="hidden sm:flex items-center space-x-2 text-xs text-slate-500">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span>Engine Online</span>
+        </div>
+        <a href="https://github.com/dodabhishek/resumeFilter" target="_blank" rel="noopener noreferrer" class="text-xs font-medium text-slate-600 hover:text-teal-700 flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border border-slate-200 hover:border-slate-300 bg-white transition-all">
+          <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+          <span>GitHub</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Layout -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    
+    <!-- Hero / Headline -->
+    <div class="text-center max-w-3xl mx-auto space-y-2">
+      <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
+        AI Resume Screening & Ranking
+      </h1>
+      <p class="text-slate-600 text-sm sm:text-base">
+        Upload candidate resumes and filter dynamically against your exact requirements.
+        The engine enforces that candidates have <span class="font-semibold text-teal-800">actually built verified projects</span> with your required skills, rather than merely stuffing keywords.
+      </p>
+    </div>
+
+    <!-- Configuration & Ingestion Row -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      
+      <!-- Left: Dynamic Requirements Configuration (7 cols) -->
+      <section class="lg:col-span-7 bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm space-y-6">
+        <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+          <div>
+            <h2 class="text-lg font-bold text-slate-900 flex items-center space-x-2">
+              <span>🎯 Job Requirements & Filtering Criteria</span>
+            </h2>
+            <p class="text-xs text-slate-500 mt-0.5">Customize skills and enforce mandatory hands-on project experience</p>
+          </div>
+          <!-- Preset Badges -->
+          <div class="flex items-center space-x-1.5">
+            <span class="text-xs font-medium text-slate-400">Presets:</span>
+            <button type="button" onclick="loadPreset('ai_sde')" class="text-xs font-semibold px-2.5 py-1 rounded-md bg-teal-50 text-teal-700 hover:bg-teal-100 border border-teal-200 transition">AI / Agentic</button>
+            <button type="button" onclick="loadPreset('backend')" class="text-xs font-semibold px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 transition">Python Backend</button>
+            <button type="button" onclick="loadPreset('fullstack')" class="text-xs font-semibold px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 transition">Full Stack</button>
+          </div>
+        </div>
+
+        <form id="filterForm" class="space-y-5" onsubmit="event.preventDefault();">
+          <!-- Role Title -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Target Job Role</label>
+            <input type="text" id="roleTitle" value="Python + AI/Agentic Software Engineer" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition" placeholder="e.g. Senior Backend Engineer">
+          </div>
+
+          <!-- Must Have Built Projects On (Key Filter!) -->
+          <div class="p-4 rounded-xl bg-teal-50/60 border border-teal-200/80 space-y-2">
+            <div class="flex items-start justify-between">
+              <label class="block text-xs font-bold uppercase tracking-wider text-teal-900">
+                ⭐ Must Have Built Projects With (Strict Verification)
+              </label>
+              <span class="text-[11px] font-semibold text-teal-700 bg-teal-100 px-2 py-0.5 rounded-full">Mandatory Projects</span>
+            </div>
+            <p class="text-xs text-teal-800">
+              Candidates <strong class="font-bold">MUST</strong> have built or documented hands-on projects using these technologies. Candidates who only mention them in a skills list will be <strong class="font-bold text-rose-700">rejected</strong>.
+            </p>
+            <input type="text" id="mustHaveProjects" value="LangGraph, RAG, OpenAI" class="w-full px-3.5 py-2.5 rounded-xl border border-teal-300 text-sm font-semibold text-teal-950 bg-white focus:ring-2 focus:ring-teal-500 outline-none transition" placeholder="Comma-separated, e.g. LangGraph, RAG, ChromaDB">
+            <div class="flex flex-wrap gap-1.5 pt-1" id="projectTags"></div>
+          </div>
+
+          <!-- Core Required Skills -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+              Core Required Skills (Must appear on resume)
+            </label>
+            <input type="text" id="requiredSkills" value="Python, FastAPI" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-teal-500 outline-none transition" placeholder="Comma-separated, e.g. Python, SQL, Git">
+          </div>
+
+          <!-- Preferred / Bonus Skills -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+              Preferred / Bonus Skills (Nice-to-have)
+            </label>
+            <input type="text" id="preferredSkills" value="Docker, PostgreSQL, Redis" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-teal-500 outline-none transition" placeholder="Comma-separated, e.g. Docker, AWS, Celery">
+          </div>
+        </form>
+      </section>
+
+      <!-- Right: Resume Ingestion & Uploader (5 cols) -->
+      <section class="lg:col-span-5 bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm space-y-6">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900 flex items-center space-x-2">
+            <span>📁 Resume Ingestion</span>
+          </h2>
+          <p class="text-xs text-slate-500 mt-0.5">Upload new files/folders or use the benchmark resumes</p>
+        </div>
+
+        <!-- Ingestion Source Tabs -->
+        <div class="flex border-b border-slate-200 text-xs font-semibold">
+          <button id="tabUploadBtn" onclick="switchSourceTab('upload')" class="pb-2.5 px-3 border-b-2 border-teal-600 text-teal-700 transition">
+            Upload Files / Folder
+          </button>
+          <button id="tabServerBtn" onclick="switchSourceTab('server')" class="pb-2.5 px-3 border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition">
+            Server Folder (51 Resumes)
+          </button>
+        </div>
+
+        <!-- Tab 1: Upload Dropzone & Pickers -->
+        <div id="uploadSourcePanel" class="space-y-4">
+          <!-- Drop Area -->
+          <div id="dropZone" class="border-2 border-dashed border-slate-300 hover:border-teal-500 rounded-2xl p-6 text-center cursor-pointer transition bg-slate-50/50 hover:bg-teal-50/30 group">
+            <div class="w-12 h-12 mx-auto rounded-full bg-teal-100/70 text-teal-700 flex items-center justify-center mb-3 group-hover:scale-110 transition">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+              </svg>
+            </div>
+            <p class="text-sm font-semibold text-slate-700">Drag & drop resume files here</p>
+            <p class="text-xs text-slate-400 mt-1">Supports PDF, DOCX, DOC, TXT</p>
+            
+            <div class="mt-4 flex items-center justify-center gap-2">
+              <label class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-teal-600 text-white hover:bg-teal-700 shadow-sm cursor-pointer transition">
+                Select Files
+                <input type="file" id="fileInput" multiple accept=".pdf,.docx,.doc,.txt" class="hidden" onchange="handleFileSelect(event)">
+              </label>
+              <label class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 cursor-pointer transition">
+                Select Folder
+                <input type="file" id="folderInput" webkitdirectory directory multiple class="hidden" onchange="handleFolderSelect(event)">
+              </label>
+            </div>
+          </div>
+
+          <!-- Staged / Uploaded Files Preview -->
+          <div id="uploadedFilesContainer" class="hidden space-y-2">
+            <div class="flex items-center justify-between text-xs font-bold text-slate-700">
+              <span id="uploadedCountBadge">0 files ready</span>
+              <button onclick="clearUploadedFiles()" class="text-rose-600 hover:text-rose-700 transition">Clear</button>
+            </div>
+            <div id="uploadedFilesList" class="max-h-36 overflow-y-auto space-y-1 pr-1 custom-scrollbar text-xs"></div>
+          </div>
+        </div>
+
+        <!-- Tab 2: Server Directory Mode -->
+        <div id="serverSourcePanel" class="hidden space-y-4">
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+            <div class="flex items-center space-x-2 text-xs font-bold text-slate-700">
+              <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+              <span>Server Resume Repository</span>
+            </div>
+            <p class="text-xs text-slate-500">
+              The project includes 51 test candidate resumes in the local repository.
+            </p>
+            <div class="flex items-center space-x-2 pt-1">
+              <input type="text" id="serverDirPath" value="./resumes" class="w-full px-3 py-2 text-xs font-mono rounded-lg border border-slate-200 bg-white outline-none">
+            </div>
+          </div>
+        </div>
+
+        <!-- Start Filtering Action Button -->
+        <div class="pt-2">
+          <button id="startFilterBtn" onclick="startScreening()" class="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-bold text-sm shadow-md shadow-teal-500/20 flex items-center justify-center space-x-2 transition transform active:scale-[0.99]">
+            <svg id="btnSpinner" class="hidden animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+            </svg>
+            <span id="btnText">Start Filtering Resumes</span>
+          </button>
+          <div id="statusMessage" class="text-center text-xs text-slate-500 mt-2 font-medium"></div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- Results Section (Visible after execution or when results exist) -->
+    <section id="resultsSection" class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 sm:p-8 space-y-6">
+      
+      <!-- Summary Metrics Bar -->
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-slate-200">
+        <div>
+          <h2 class="text-xl font-bold text-slate-900">Screening Results</h2>
+          <p id="summarySubtitle" class="text-xs text-slate-500 mt-0.5">Filter results based on dynamic project and keyword verification</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="px-3.5 py-1.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-semibold flex items-center space-x-1.5">
+            <span>Total Evaluated:</span>
+            <span id="metricTotal" class="font-bold text-slate-900">0</span>
+          </div>
+          <div class="px-3.5 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-semibold flex items-center space-x-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span>Accepted:</span>
+            <span id="metricAccepted" class="font-bold text-emerald-900">0</span>
+          </div>
+          <div class="px-3.5 py-1.5 rounded-xl bg-rose-50 text-rose-800 border border-rose-200 text-xs font-semibold flex items-center space-x-1.5">
+            <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+            <span>Rejected:</span>
+            <span id="metricRejected" class="font-bold text-rose-900">0</span>
+          </div>
+          <div class="px-3.5 py-1.5 rounded-xl bg-slate-100 text-slate-600 text-xs font-mono font-medium">
+            ⏱ <span id="metricTime">0.0s</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabs & Search Controls -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <!-- Two Primary Tabs: Accepted / Rejected -->
+        <div class="flex space-x-2 border-b border-slate-200 pb-1">
+          <button id="tabAcceptedBtn" onclick="switchResultTab('accepted')" class="flex items-center space-x-2 px-4 py-2 text-sm font-bold border-b-2 border-emerald-600 text-emerald-700 transition">
+            <span>Accepted Candidates</span>
+            <span id="badgeAcceptedCount" class="text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">0</span>
+          </button>
+          <button id="tabRejectedBtn" onclick="switchResultTab('rejected')" class="flex items-center space-x-2 px-4 py-2 text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition">
+            <span>Rejected Candidates</span>
+            <span id="badgeRejectedCount" class="text-xs px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 font-bold">0</span>
+          </button>
+        </div>
+
+        <!-- Search Bar within Results -->
+        <div class="flex items-center space-x-2">
+          <div class="relative w-full sm:w-64">
+            <input type="text" id="searchCandidatesInput" oninput="filterCandidateCards()" placeholder="Search candidates or skills..." class="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 bg-slate-50 outline-none focus:bg-white focus:ring-2 focus:ring-teal-500">
+            <svg class="w-4 h-4 text-slate-400 absolute left-2.5 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          </div>
+          <button onclick="exportResultsJSON()" class="px-3 py-1.5 text-xs font-semibold rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition">
+            Export JSON
+          </button>
+        </div>
+      </div>
+
+      <!-- TAB 1: ACCEPTED CANDIDATES -->
+      <div id="acceptedTabContent" class="space-y-4">
+        <div id="acceptedCandidatesList" class="space-y-4">
+          <!-- Populated by JavaScript -->
+          <div class="text-center py-12 text-slate-400 text-sm">
+            No accepted candidates yet. Configure requirements and click "Start Filtering Resumes".
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: REJECTED CANDIDATES -->
+      <div id="rejectedTabContent" class="hidden space-y-4">
+        <div id="rejectedCandidatesList" class="space-y-4">
+          <!-- Populated by JavaScript -->
+          <div class="text-center py-12 text-slate-400 text-sm">
+            No rejected candidates to display.
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="mt-auto py-6 border-t border-slate-200 text-center text-xs text-slate-400">
+    ResumeFilter AI Engine &bull; Dynamic Project Verification & Explainable Screening
+  </footer>
+
+  <!-- Main JavaScript Logic -->
+  <script>
+    let currentSourceMode = 'upload'; // 'upload' | 'server'
+    let currentResultTab = 'accepted'; // 'accepted' | 'rejected'
+    let stagedFiles = [];
+    let latestResults = null;
+
+    // Presets
+    const PRESETS = {
+      ai_sde: {
+        role: "Python + AI/Agentic Software Engineer",
+        projects: "LangGraph, RAG, OpenAI, Pinecone",
+        required: "Python, FastAPI",
+        preferred: "Docker, PostgreSQL, Redis"
+      },
+      backend: {
+        role: "Senior Python Backend Engineer",
+        projects: "FastAPI, PostgreSQL, Redis, Celery",
+        required: "Python, SQL, REST API",
+        preferred: "Docker, Kubernetes, AWS"
+      },
+      fullstack: {
+        role: "Full-Stack AI Application Developer",
+        projects: "Next.js, FastAPI, OpenAI, LangChain",
+        required: "Python, TypeScript, React",
+        preferred: "Tailwind, Docker, Supabase"
+      }
+    };
+
+    function loadPreset(name) {
+      const p = PRESETS[name];
+      if (!p) return;
+      document.getElementById('roleTitle').value = p.role;
+      document.getElementById('mustHaveProjects').value = p.projects;
+      document.getElementById('requiredSkills').value = p.required;
+      document.getElementById('preferredSkills').value = p.preferred;
+      renderProjectTags();
+    }
+
+    function renderProjectTags() {
+      const val = document.getElementById('mustHaveProjects').value;
+      const container = document.getElementById('projectTags');
+      container.innerHTML = '';
+      val.split(',').map(s => s.trim()).filter(Boolean).forEach(tag => {
+        const badge = document.createElement('span');
+        badge.className = 'text-[11px] font-medium px-2 py-0.5 rounded-md bg-teal-100 text-teal-800 border border-teal-200';
+        badge.textContent = 'Project: ' + tag;
+        container.appendChild(badge);
+      });
+    }
+
+    document.getElementById('mustHaveProjects').addEventListener('input', renderProjectTags);
+    renderProjectTags();
+
+    // Source Tab Switching
+    function switchSourceTab(mode) {
+      currentSourceMode = mode;
+      const tabUpload = document.getElementById('tabUploadBtn');
+      const tabServer = document.getElementById('tabServerBtn');
+      const panelUpload = document.getElementById('uploadSourcePanel');
+      const panelServer = document.getElementById('serverSourcePanel');
+
+      if (mode === 'upload') {
+        tabUpload.className = "pb-2.5 px-3 border-b-2 border-teal-600 text-teal-700 transition font-bold";
+        tabServer.className = "pb-2.5 px-3 border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition";
+        panelUpload.classList.remove('hidden');
+        panelServer.classList.add('hidden');
+      } else {
+        tabServer.className = "pb-2.5 px-3 border-b-2 border-teal-600 text-teal-700 transition font-bold";
+        tabUpload.className = "pb-2.5 px-3 border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition";
+        panelServer.classList.remove('hidden');
+        panelUpload.classList.add('hidden');
+      }
+    }
+
+    // Drag and Drop
+    const dropZone = document.getElementById('dropZone');
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        dropZone.classList.add('border-teal-500', 'bg-teal-50/50');
+      }, false);
+    });
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('border-teal-500', 'bg-teal-50/50');
+      }, false);
+    });
+    dropZone.addEventListener('drop', (e) => {
+      const dt = e.dataTransfer;
+      const files = dt.files;
+      handleFiles(Array.from(files));
+    });
+
+    function handleFileSelect(e) {
+      handleFiles(Array.from(e.target.files));
+    }
+
+    function handleFolderSelect(e) {
+      handleFiles(Array.from(e.target.files));
+    }
+
+    function handleFiles(files) {
+      const valid = files.filter(f => {
+        const ext = f.name.split('.').pop().toLowerCase();
+        return ['pdf', 'docx', 'doc', 'txt', 'md'].includes(ext);
+      });
+      stagedFiles = stagedFiles.concat(valid);
+      updateUploadedFilesUI();
+    }
+
+    function clearUploadedFiles() {
+      stagedFiles = [];
+      updateUploadedFilesUI();
+    }
+
+    function updateUploadedFilesUI() {
+      const container = document.getElementById('uploadedFilesContainer');
+      const list = document.getElementById('uploadedFilesList');
+      const badge = document.getElementById('uploadedCountBadge');
+
+      if (stagedFiles.length === 0) {
+        container.classList.add('hidden');
+        list.innerHTML = '';
+        badge.textContent = '0 files ready';
+        return;
+      }
+
+      container.classList.remove('hidden');
+      badge.textContent = `${stagedFiles.length} file(s) staged for screening`;
+      list.innerHTML = '';
+
+      stagedFiles.slice(0, 20).forEach((file, idx) => {
+        const row = document.createElement('div');
+        row.className = 'flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-700';
+        row.innerHTML = `
+          <div class="flex items-center space-x-2 truncate">
+            <svg class="w-3.5 h-3.5 text-teal-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+            <span class="truncate">${file.name}</span>
+          </div>
+          <span class="text-[10px] text-slate-400 font-mono">${(file.size / 1024).toFixed(1)} KB</span>
+        `;
+        list.appendChild(row);
+      });
+
+      if (stagedFiles.length > 20) {
+        const more = document.createElement('div');
+        more.className = 'text-center text-[11px] text-slate-400 pt-1';
+        more.textContent = `... and ${stagedFiles.length - 20} more files`;
+        list.appendChild(more);
+      }
+    }
+
+    // Start Screening
+    async function startScreening() {
+      const btn = document.getElementById('startFilterBtn');
+      const spinner = document.getElementById('btnSpinner');
+      const btnText = document.getElementById('btnText');
+      const statusMsg = document.getElementById('statusMessage');
+
+      const roleTitle = document.getElementById('roleTitle').value.trim();
+      const mustHaveProjects = document.getElementById('mustHaveProjects').value.split(',').map(s => s.trim()).filter(Boolean);
+      const requiredSkills = document.getElementById('requiredSkills').value.split(',').map(s => s.trim()).filter(Boolean);
+      const preferredSkills = document.getElementById('preferredSkills').value.split(',').map(s => s.trim()).filter(Boolean);
+
+      const criteria = {
+        role_title: roleTitle || "Software Engineer",
+        must_have_project_keywords: mustHaveProjects,
+        required_keywords: requiredSkills,
+        preferred_keywords: preferredSkills
+      };
+
+      btn.disabled = true;
+      spinner.classList.remove('hidden');
+      btnText.textContent = "Screening in Progress...";
+      statusMsg.textContent = "Uploading & running dynamic project verification...";
+
+      try {
+        let response;
+        if (currentSourceMode === 'upload' && stagedFiles.length > 0) {
+          // Upload files first via FormData
+          statusMsg.textContent = `Uploading ${stagedFiles.length} file(s)...`;
+          const formData = new FormData();
+          stagedFiles.forEach(f => formData.append('files', f));
+
+          const uploadRes = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData
+          });
+          const uploadData = await uploadRes.json();
+          if (!uploadRes.ok) throw new Error(uploadData.error || 'File upload failed');
+
+          statusMsg.textContent = `Evaluating candidate project experience...`;
+          response = await fetch('/api/screen', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              session_id: uploadData.session_id,
+              criteria: criteria
+            })
+          });
+        } else {
+          // Server directory mode
+          const dirPath = document.getElementById('serverDirPath').value.trim() || "./resumes";
+          statusMsg.textContent = `Screening folder '${dirPath}'...`;
+          response = await fetch('/api/screen', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              input_dir: dirPath,
+              criteria: criteria
+            })
+          });
+        }
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Screening pipeline error');
+
+        latestResults = data;
+        renderResults(data);
+        statusMsg.textContent = `Screening complete in ${data.batch_summary.execution_time_seconds}s.`;
+      } catch (err) {
+        console.error(err);
+        statusMsg.textContent = `Error: ${err.message}`;
+        alert("Screening Error: " + err.message);
+      } finally {
+        btn.disabled = false;
+        spinner.classList.add('hidden');
+        btnText.textContent = "Start Filtering Resumes";
+      }
+    }
+
+    // Render Screening Results
+    function renderResults(data) {
+      const summary = data.batch_summary;
+      document.getElementById('metricTotal').textContent = summary.total_resumes;
+      document.getElementById('metricAccepted').textContent = summary.eligible;
+      document.getElementById('metricRejected').textContent = summary.rejected;
+      document.getElementById('metricTime').textContent = summary.execution_time_seconds + 's';
+
+      document.getElementById('badgeAcceptedCount').textContent = summary.eligible;
+      document.getElementById('badgeRejectedCount').textContent = summary.rejected;
+
+      renderAcceptedList(data.ranked_candidates);
+      renderRejectedList(data.rejected_candidates);
+
+      // Scroll smoothly to results
+      document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Render Accepted Candidates List (NO SCORE SHOWN, SHOW REMARKS ON WHAT & WHY ACCEPTED)
+    function renderAcceptedList(candidates) {
+      const list = document.getElementById('acceptedCandidatesList');
+      list.innerHTML = '';
+
+      if (!candidates || candidates.length === 0) {
+        list.innerHTML = `
+          <div class="text-center py-10 bg-slate-50 rounded-2xl border border-slate-200 text-slate-500 text-sm">
+            No candidates matched all required project criteria.
+          </div>
+        `;
+        return;
+      }
+
+      candidates.forEach((cand, idx) => {
+        const card = document.createElement('div');
+        card.className = "candidate-card bg-white rounded-2xl border border-emerald-200/80 p-5 shadow-sm hover:shadow-md transition space-y-4";
+        card.dataset.name = cand.candidate_name.toLowerCase();
+        card.dataset.skills = (cand.matched_skills || []).join(' ').toLowerCase();
+
+        // Rank Badge
+        let rankBadgeClass = "bg-emerald-100 text-emerald-800 border-emerald-200";
+        let rankText = `#${cand.rank || idx + 1} Top Match`;
+        if (idx === 0) rankText = "🏆 #1 Top Candidate";
+
+        // Verified Skills Badges
+        const skillsHtml = (cand.matched_skills || []).slice(0, 8).map(s => 
+          `<span class="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200">${s}</span>`
+        ).join(' ');
+
+        // Remarks on What They Built & Why Accepted
+        const remarksHtml = (cand.remarks_accepted || []).map(r => `
+          <li class="flex items-start space-x-2 text-xs text-slate-700">
+            <span class="text-emerald-600 font-bold mt-0.5">✓</span>
+            <span>${r}</span>
+          </li>
+        `).join('');
+
+        // Project Summary
+        const projectSummary = cand.project_summary || "Demonstrated relevant engineering projects matching requirements.";
+
+        // GitHub Link
+        const githubHtml = cand.github_url ? `
+          <a href="${cand.github_url}" target="_blank" class="text-xs font-semibold text-teal-700 hover:underline flex items-center space-x-1">
+            <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+            <span>GitHub Profile</span>
+          </a>
+        ` : '';
+
+        card.innerHTML = `
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
+            <div class="flex items-center space-x-3">
+              <span class="text-xs font-bold px-2.5 py-1 rounded-full border ${rankBadgeClass}">${rankText}</span>
+              <h3 class="text-base font-bold text-slate-900">${cand.candidate_name}</h3>
+            </div>
+            <div class="flex items-center space-x-3 text-xs text-slate-500">
+              ${cand.email ? `<span>✉ ${cand.email}</span>` : ''}
+              ${githubHtml}
+              <span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 font-mono text-[11px]">${cand.source_file}</span>
+            </div>
+          </div>
+
+          <!-- Matched Technologies -->
+          <div class="flex flex-wrap items-center gap-1.5">
+            <span class="text-xs font-bold text-slate-400 mr-1">Skills:</span>
+            ${skillsHtml}
+          </div>
+
+          <!-- What They Built (Project Highlights) -->
+          <div class="p-3.5 rounded-xl bg-teal-50/50 border border-teal-100 space-y-1">
+            <div class="text-xs font-bold uppercase tracking-wider text-teal-900 flex items-center space-x-1">
+              <span>🛠 What They Built & Project Work</span>
+            </div>
+            <p class="text-xs text-slate-700 leading-relaxed font-medium">
+              ${projectSummary}
+            </p>
+          </div>
+
+          <!-- Why Accepted (Decision Remarks) -->
+          <div class="space-y-1.5 pt-1">
+            <div class="text-xs font-bold uppercase tracking-wider text-slate-500">
+              Why Accepted (Evaluation Points)
+            </div>
+            <ul class="space-y-1 bg-slate-50/80 p-3 rounded-xl border border-slate-100">
+              ${remarksHtml}
+            </ul>
+          </div>
+        `;
+        list.appendChild(card);
+      });
+    }
+
+    // Render Rejected Candidates List (SHOW EXPLICIT WHY REJECTED REMARKS)
+    function renderRejectedList(candidates) {
+      const list = document.getElementById('rejectedCandidatesList');
+      list.innerHTML = '';
+
+      if (!candidates || candidates.length === 0) {
+        list.innerHTML = `
+          <div class="text-center py-10 bg-slate-50 rounded-2xl border border-slate-200 text-slate-500 text-sm">
+            No rejected candidates in this screening run.
+          </div>
+        `;
+        return;
+      }
+
+      candidates.forEach(cand => {
+        const card = document.createElement('div');
+        card.className = "candidate-card bg-white rounded-2xl border border-rose-200/80 p-5 shadow-sm hover:shadow-md transition space-y-4";
+        card.dataset.name = cand.candidate_name.toLowerCase();
+        card.dataset.skills = (cand.matched_skills || []).join(' ').toLowerCase();
+
+        // Reasons & Remarks
+        const reasonsHtml = (cand.remarks_rejected && cand.remarks_rejected.length > 0 ? cand.remarks_rejected : cand.rejection_reasons).map(r => `
+          <li class="flex items-start space-x-2 text-xs text-rose-800 font-medium">
+            <span class="text-rose-500 font-bold mt-0.5">✕</span>
+            <span>${r}</span>
+          </li>
+        `).join('');
+
+        const skillsHtml = (cand.matched_skills || []).slice(0, 6).map(s => 
+          `<span class="text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200">${s}</span>`
+        ).join(' ') || '<span class="text-xs text-slate-400">None detected</span>';
+
+        card.innerHTML = `
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
+            <div class="flex items-center space-x-3">
+              <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-700 border border-rose-200">Not Eligible</span>
+              <h3 class="text-base font-bold text-slate-800">${cand.candidate_name}</h3>
+            </div>
+            <div class="flex items-center space-x-3 text-xs text-slate-500">
+              ${cand.email ? `<span>✉ ${cand.email}</span>` : ''}
+              <span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 font-mono text-[11px]">${cand.source_file}</span>
+            </div>
+          </div>
+
+          <!-- Why Rejected (Primary Reason Box) -->
+          <div class="p-3.5 rounded-xl bg-rose-50/70 border border-rose-200 space-y-1.5">
+            <div class="text-xs font-bold uppercase tracking-wider text-rose-900 flex items-center space-x-1.5">
+              <span>⚠️ Why Rejected</span>
+            </div>
+            <ul class="space-y-1.5">
+              ${reasonsHtml}
+            </ul>
+          </div>
+
+          <!-- Detected Skills if any -->
+          <div class="flex flex-wrap items-center gap-1.5 pt-1 text-xs">
+            <span class="font-bold text-slate-400 mr-1">Other Skills Found:</span>
+            ${skillsHtml}
+          </div>
+        `;
+        list.appendChild(card);
+      });
+    }
+
+    // Result Tabs Switching
+    function switchResultTab(tab) {
+      currentResultTab = tab;
+      const tabAccepted = document.getElementById('tabAcceptedBtn');
+      const tabRejected = document.getElementById('tabRejectedBtn');
+      const contentAccepted = document.getElementById('acceptedTabContent');
+      const contentRejected = document.getElementById('rejectedTabContent');
+
+      if (tab === 'accepted') {
+        tabAccepted.className = "flex items-center space-x-2 px-4 py-2 text-sm font-bold border-b-2 border-emerald-600 text-emerald-700 transition";
+        tabRejected.className = "flex items-center space-x-2 px-4 py-2 text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition";
+        contentAccepted.classList.remove('hidden');
+        contentRejected.classList.add('hidden');
+      } else {
+        tabRejected.className = "flex items-center space-x-2 px-4 py-2 text-sm font-bold border-b-2 border-rose-600 text-rose-700 transition";
+        tabAccepted.className = "flex items-center space-x-2 px-4 py-2 text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition";
+        contentRejected.classList.remove('hidden');
+        contentAccepted.classList.add('hidden');
+      }
+    }
+
+    // Filter Candidate Cards by Search Input
+    function filterCandidateCards() {
+      const q = document.getElementById('searchCandidatesInput').value.toLowerCase().trim();
+      const cards = document.querySelectorAll('.candidate-card');
+      cards.forEach(c => {
+        const name = c.dataset.name || '';
+        const skills = c.dataset.skills || '';
+        if (!q || name.includes(q) || skills.includes(q)) {
+          c.classList.remove('hidden');
+        } else {
+          c.classList.add('hidden');
+        }
+      });
+    }
+
+    // Export JSON
+    function exportResultsJSON() {
+      if (!latestResults) {
+        alert("No results to export yet.");
+        return;
+      }
+      const blob = new Blob([JSON.stringify(latestResults, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `screening_results_${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // On Load: Fetch latest results if available
+    window.addEventListener('DOMContentLoaded', async () => {
+      try {
+        const res = await fetch('/api/results');
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.batch_summary && data.batch_summary.total_resumes > 0) {
+            latestResults = data;
+            renderResults(data);
+          }
+        }
+      } catch (e) {
+        // Ignored
+      }
+    });
+  </script>
+</body>
+</html>
