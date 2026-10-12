@@ -82,7 +82,7 @@ class ScreeningAPIHandler(BaseHTTPRequestHandler):
             self._send_html(index_path)
         elif url_path in ("/api/results", "/results"):
             self._send_json(200, LATEST_RESULTS)
-        elif url_path == "/health":
+        elif url_path in ("/health", "/api/v1/health"):
             self._send_json(200, {"status": "healthy", "service": "Resume Screening & UI Engine"})
         elif url_path.startswith("/static/"):
             rel_path = url_path[len("/static/"):]
