@@ -1,0 +1,22 @@
+# Environment variables
+.env
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
+env/
+
+# Python cache and bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# Output and local test artifacts
+output/
+scratch/
+.DS_Store
+*.swp
+*~
